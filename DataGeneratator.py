@@ -115,10 +115,11 @@ def getRadarData():
                 nowTimeStamp += collectGap[radarIndex]
                 nowPointIndex += 1
         ###以下操作随机打散track
-        indices = torch.randperm(curAns.size(1))
+        indices = torch.randperm(curAns.size(0))
+        print(indices)
         for trackIndex in range(0, numTrack):
             label[radarIndex][trackIndex] = indices[trackIndex]
-        curAns = curAns[:, indices]
+        curAns = curAns[indices]
         curAns = curAns.view(numTrack, 1, maxCollectNum, 3)
         ansTuple.append(curAns)
     return ansTuple, label
