@@ -65,13 +65,12 @@ def trainFunc(epochTime):
                     loss.backward()
                     optimizerC.step()
                     optimizerF.step()
-        #if(runEpoch %10000 == 0):
+        if(runEpoch %100 == 0):
+            print('epoch [%d] loss %f'%(runEpoch, running_loss))
+
         lossPoint.append(running_loss)
             # 每2000次迭代，输出loss的平均值
-startTime = time.time()
-trainFunc(20)
-endTime = time.time()
-print('use %d seconds'%(endTime - startTime))
+trainFunc(5000)
 DG.plotLoss(lossPoint)
 correct = 0.
 error = 0.
