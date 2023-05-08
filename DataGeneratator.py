@@ -28,7 +28,7 @@ timeIndex = 2
 totalCollectTime = 10.0
 ### 传感器收集间隔
 collectGap = generate_random_float_list(1.0, 2.0, numRadar)
-maxCollectNum = 0
+maxCollectNum = 10
 ###速度变化
 vChange = 5
 ###各个传感器在x和y方向上的采集误差
@@ -65,10 +65,8 @@ def drawRadarDataCurve (radarData):
     return
 
 def getRadarCollectNum():
-    global maxCollectNum
     for radarIndex in range(0,numRadar):
         collectNums[radarIndex] = int(totalCollectTime // collectGap[radarIndex])
-        maxCollectNum = max(collectNums[radarIndex],maxCollectNum)
 
 ####生成多个传感器的数据矩阵
 ####并且为各个数据打上标签
