@@ -19,9 +19,8 @@ def generate_random_float_list(start, end, count):
     return random_list
 
 ####dim0:传感器编号,dim1:捕获的轨迹数,dim2:channel4 1.传感器捕获x,2.传感器捕获的y,3.传感器捕获的vx,4.传感器捕获的vy,dim3:捕获的点数,
-numRadar = 2
-numTrack = 5
-numGettingPoint = 5
+numRadar = 3
+numTrack = 20
 xPosIndex = 0
 yPosIndex = 1
 timeIndex = 2
@@ -31,13 +30,13 @@ totalCollectTime = 10.0
 collectGap = generate_random_float_list(1.0, 2.0, numRadar)
 maxCollectNum = 0
 ###速度变化
-vChange = 30
+vChange = 5
 ###各个传感器在x和y方向上的采集误差
-xDiff = generate_random_float_list(-500, 500, numRadar)
-yDiff = generate_random_float_list(-500, 500, numRadar)
+xDiff = generate_random_float_list(-20, 20, numRadar)
+yDiff = generate_random_float_list(-20, 20, numRadar)
 ###当收集的点数变化的时候,这里需要相应的变化
 ###协方差矩阵
-covariance_matrix = np.eye(numGettingPoint)
+covariance_matrix = np.eye(maxCollectNum)
 collectNums = torch.zeros(numRadar,dtype=torch.int32)
 mainRadarIndex = 0
 mainIndex = 0
@@ -57,7 +56,7 @@ def drawRadarDataCurve (radarData):
                xPos.append(radarData[radarIndex][trackIndex][0][pointIndex][xPosIndex].item())
                yPos.append(radarData[radarIndex][trackIndex][0][pointIndex][yPosIndex].item())
             labelStr = 'CurveIndex' + str(radarIndex) + str(trackIndex)
-            plt.scatter(xPos, yPos, label=labelStr)
+            plt.scatter(xPos, yPos, label=labelStr,s=15)
     plt.title('Curves')
     plt.xlabel('X')
     plt.ylabel('Y')
@@ -81,24 +80,24 @@ def getRadarData():
     getRadarCollectNum()
     startPosX = generate_random_float_list(-2000, 2000, numTrack)
     startPosY = generate_random_float_list(-2000, 2000, numTrack)
-    startVX = generate_random_float_list(-100*1000, 100*1000, numTrack)
-    startVY = generate_random_float_list(-100*1000, 100*1000, numTrack)
+    startVX = generate_random_float_list(-30, 30, numTrack)
+    startVY = generate_random_float_list(-30, 30, numTrack)
     label = torch.zeros(numRadar, numTrack, dtype=torch.int64)
     for radarIndex in range(0, numRadar):
         #获得能够读取的点数
         curCanGettingPoints = collectNums[radarIndex]
         ###x,y,t
         curAns = torch.zeros(numTrack, maxCollectNum, 3)
+        Vx = 0
+        Vy = 0
         for trackIndex in range(0, numTrack):
             label[radarIndex][trackIndex] = trackIndex
-            Vx = 0
-            Vy = 0
             preDataX = 0
             preDataY = 0
             nowTimeStamp = 0.0
             nowPointIndex = 0
             while nowPointIndex < curCanGettingPoints:
-                if nowTimeStamp == 0.0:
+                if nowPointIndex == 0:
                     Vx = startVX[trackIndex]
                     Vy = startVY[trackIndex]
                     preDataX = startPosX[trackIndex]

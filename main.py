@@ -1,5 +1,5 @@
 import torch
-
+import time
 import DataGeneratator as DG
 import TrackAssosiate as TA
 import torch.nn as nn
@@ -16,6 +16,7 @@ testLabel.cuda()
 print(label)
 ####绘制曲线
 DG.drawRadarDataCurve(radarData)
+DG.drawRadarDataCurve(testData)
 feautureModel = TA.RNNClassifier(input_size=3, hidden_size=8, batch_first=True, num_layers=3, bidirectional=True)
 classcifiyModel = TA.LogisticRegression()
 
@@ -67,7 +68,10 @@ def trainFunc(epochTime):
         #if(runEpoch %10000 == 0):
         lossPoint.append(running_loss)
             # 每2000次迭代，输出loss的平均值
+startTime = time.time()
 trainFunc(20)
+endTime = time.time()
+print('use %d seconds'%(endTime - startTime))
 DG.plotLoss(lossPoint)
 correct = 0.
 error = 0.
