@@ -23,7 +23,10 @@ optimizerC = optim.Adam(classcifiyModel.parameters(), lr=0.001)
 criterion = nn.CrossEntropyLoss()
 criterion.cuda()
 lossPoint = []
+
+backWardTime = 0
 def trainFunc(epochTime):
+    global backWardTime
     for runEpoch in range(0, epochTime):
         running_loss = 0.0
         for currentRadar in range(0, DG.numRadar):
@@ -31,6 +34,7 @@ def trainFunc(epochTime):
                 continue
             for mainRadarTrackIndex in range(0, DG.numTrack):
                 for subRadarTrackIndex in range(0, DG.numTrack):
+                    backWardTime = backWardTime +1
                     mainData = radarData[DG.mainRadarIndex][mainRadarTrackIndex].cuda()
                     subData = radarData[currentRadar][subRadarTrackIndex].cuda()
                     mainRadarOut = feautureModel.forward(mainData)
@@ -48,13 +52,12 @@ def trainFunc(epochTime):
                     loss.backward()
                     optimizerC.step()
                     optimizerF.step()
-        if(runEpoch %100 == 0):
-            print('epoch [%d] loss %f'%(runEpoch, running_loss))
-
-        lossPoint.append(running_loss)
-            # 每2000次迭代，输出loss的平均值
+                    if backWardTime % 100 == 0:
+                        print('backwardTime [%d] loss %f' % (backWardTime, running_loss))
+                        running_loss = 0
 trainFunc(500)
 DG.plotLoss(lossPoint)
 torch.save(feautureModel, 'featureModel.pth')
 torch.save(classcifiyModel, 'classModel.pth')
+testAcc.testAcc()
 
