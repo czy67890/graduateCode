@@ -20,7 +20,7 @@ def generate_random_float_list(start, end, count):
 
 ####dim0:传感器编号,dim1:捕获的轨迹数,dim2:channel4 1.传感器捕获x,2.传感器捕获的y,3.传感器捕获的vx,4.传感器捕获的vy,dim3:捕获的点数,
 numRadar = 3
-numTrack = 20
+numTrack = 30
 xPosIndex = 0
 yPosIndex = 1
 timeIndex = 2
@@ -60,7 +60,6 @@ def drawRadarDataCurve (radarData):
     plt.title('Curves')
     plt.xlabel('X')
     plt.ylabel('Y')
-    plt.legend()
     plt.show()
     return
 
@@ -113,7 +112,6 @@ def getRadarData():
                 nowPointIndex += 1
         ###以下操作随机打散track
         indices = torch.randperm(curAns.size(0))
-        print(indices)
         for trackIndex in range(0, numTrack):
             label[radarIndex][trackIndex] = indices[trackIndex]
         curAns = curAns[indices]

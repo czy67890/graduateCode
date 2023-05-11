@@ -15,7 +15,7 @@ unmatched = unmatched.cuda()
 testData, testLabel = DG.getRadarData()
 testLabel.cuda()
 
-
+DG.drawRadarDataCurve(testData)
 correct = 0.
 error = 0.
 def testAcc() :
