@@ -2,13 +2,12 @@ import DataGeneratator as DG
 import TrackAssosiate as TA
 import torch
 
-matched = torch.zeros(2)
-unmatched = torch.zeros(2)
-
-matched[0] = 1
-unmatched[1] = 1
-
-
+matched = torch.ones(1)
+unmatched = torch.zeros(1)
+unmatched = unmatched.view(1,1)
+matched = matched.view(1,1)
+print(matched)
+print(unmatched)
 matched = matched.cuda()
 unmatched = unmatched.cuda()
 
@@ -34,18 +33,17 @@ def testAcc() :
             for subRadarTrackIndex in range(0, DG.numTrack):
                 mainData = testData[DG.mainRadarIndex][mainRadarTrackIndex].cuda()
                 subData = testData[currentRadar][subRadarTrackIndex].cuda()
-                mainRadarOut = fModel.forward(mainData)
-                subRadarOut = fModel.forward(subData)
+                mainRadarOut = fModel.forward(mainData, DG.collectNums[DG.mainRadarIndex])
+                subRadarOut = fModel.forward(subData, DG.collectNums[currentRadar])
                 similar = torch.cat((mainRadarOut, subRadarOut), dim=0)
                 res = cModel.forward(similar)
-                isMatched = torch.argmax(res,dim=0)
                 if testLabel[DG.mainRadarIndex][mainRadarTrackIndex] == testLabel[currentRadar][subRadarTrackIndex]:
-                    if isMatched == 0:
+                    if res >= 0.5:
                         correct = correct + 1
-                    else :
+                    else:
                         error = error + 1
                 else:
-                    if isMatched == 0:
+                    if res >= 0.5:
                         error = error + 1
                     else:
                         correct = correct + 1

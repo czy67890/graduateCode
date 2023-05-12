@@ -20,7 +20,7 @@ def generate_random_float_list(start, end, count):
 
 ####dim0:传感器编号,dim1:捕获的轨迹数,dim2:channel4 1.传感器捕获x,2.传感器捕获的y,3.传感器捕获的vx,4.传感器捕获的vy,dim3:捕获的点数,
 numRadar = 3
-numTrack = 30
+numTrack = 2
 xPosIndex = 0
 yPosIndex = 1
 timeIndex = 2
@@ -37,7 +37,7 @@ yDiff = generate_random_float_list(-20, 20, numRadar)
 ###当收集的点数变化的时候,这里需要相应的变化
 ###协方差矩阵
 covariance_matrix = np.eye(maxCollectNum)
-collectNums = torch.zeros(numRadar,dtype=torch.int32)
+collectNums = torch.zeros(numRadar, 1 ,dtype=torch.int32)
 mainRadarIndex = 0
 mainIndex = 0
 subIndex = 1
@@ -65,7 +65,7 @@ def drawRadarDataCurve (radarData):
 
 def getRadarCollectNum():
     for radarIndex in range(0,numRadar):
-        collectNums[radarIndex] = int(totalCollectTime // collectGap[radarIndex])
+        collectNums[radarIndex][0] = int(totalCollectTime // collectGap[radarIndex])
 
 ####生成多个传感器的数据矩阵
 ####并且为各个数据打上标签
@@ -110,7 +110,7 @@ def getRadarData():
                 curAns[trackIndex][nowPointIndex][timeIndex] = nowTimeStamp
                 nowTimeStamp += collectGap[radarIndex]
                 nowPointIndex += 1
-        ###以下操作随机打散track
+        ##以下操作随机打散track
         indices = torch.randperm(curAns.size(0))
         for trackIndex in range(0, numTrack):
             label[radarIndex][trackIndex] = indices[trackIndex]
