@@ -130,10 +130,24 @@ def one_hot(label, depth):
     out.scatter_(dim=1, index=idx, value=1)
     return out
 
-def plotLoss(lossChange):
+def plotLoss(lossChange,accChange):
     x = range(0,len(lossChange))
-    plt.plot(x, lossChange, label='loss change curve')
-    plt.title('loss change')
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
+    # 创建图形对象和两个轴对象
+    fig, ax1 = plt.subplots()
+
+    # 绘制第一个曲线
+    ax1.plot(x, lossChange, 'r-')
+    ax1.set_xlabel('epoch')
+    ax1.set_ylabel('loss', color='r')
+    ax1.tick_params('y', colors='r')
+
+    # 创建第二个轴对象
+    ax2 = ax1.twinx()
+    # 绘制第二个曲线
+    ax2.plot(x, accChange, 'g-')
+    ax2.set_ylabel('accuracy', color='g')
+    ax2.tick_params('y', colors='g')
+    # 调整布局
+    fig.tight_layout()
+    # 显示图形
     plt.show()
