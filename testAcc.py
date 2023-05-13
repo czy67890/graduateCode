@@ -11,10 +11,7 @@ print(unmatched)
 matched = matched.cuda()
 unmatched = unmatched.cuda()
 
-testData, testLabel = DG.getRadarData()
-testLabel.cuda()
 
-DG.drawRadarDataCurve(testData)
 correct = 0.
 error = 0.
 def testAcc() :
@@ -23,7 +20,10 @@ def testAcc() :
     fModel.eval()
 
     cModel = torch.load('classModel.pth')
+    testData, testLabel = DG.getRadarData()
+    testLabel.cuda()
 
+    DG.drawRadarDataCurve(testData)
     cModel.eval()
     global correct, error
     for currentRadar in range(0, DG.numRadar):

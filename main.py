@@ -4,18 +4,21 @@ import TrackAssosiate as TA
 import torch.nn as nn
 import torch.optim as optim
 import testAcc
-radarData, label = DG.getRadarData()
+trainGenerator = DG.DataGenerator(numRadar=2, numTrack=2 ,diff=30, xv=30,yv=30, pos=0,vChange=5)
+
+radarData, label, len = trainGenerator.getRadarData()
+trainGenerator.drawRadarDataCurve(radarData, len)
+#DG.drawRadarDataCurve(radarData)
 label.cuda()
 ####绘制曲线
-DG.drawRadarDataCurve(radarData)
 feautureModel = TA.RNNClassifier()
 classcifiyModel = TA.LogisticRegression()
 ###迁移到GPU上
 feautureModel.cuda()
 classcifiyModel.cuda()
 
-optimizerF = optim.Adam(feautureModel.parameters(), lr=0.0001)
-optimizerC = optim.Adam(classcifiyModel.parameters(), lr=0.0001)
+optimizerF = optim.Adam(feautureModel.parameters(), lr=0.001)
+optimizerC = optim.Adam(classcifiyModel.parameters(), lr=0.001)
 criterion = torch.nn.BCELoss(
     weight=None,
     size_average=None,
@@ -68,7 +71,7 @@ def trainFunc(epochTime):
                     loss.backward()
                     optimizerC.step()
                     optimizerF.step()
-                    if backWardTime % 100 == 0:
+                    if backWardTime % DG.numTrack == 0:
                         lossPoint.append(running_loss)
                         accPoint.append(correctTrain / (correctTrain + errorTrain))
                         print('backwardTime [%d] loss %f' % (backWardTime, running_loss))
@@ -76,11 +79,9 @@ def trainFunc(epochTime):
                         correctTrain = 0.
                         errorTrain = 0.
                         running_loss = 0
-
         print('epoch [%d]' % (runEpoch))
-trainFunc(500)
+trainFunc(300)
 DG.plotLoss(lossPoint,accPoint)
-
 torch.save(feautureModel, 'featureModel.pth')
 torch.save(classcifiyModel, 'classModel.pth')
 testAcc.testAcc()
