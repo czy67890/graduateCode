@@ -21,7 +21,7 @@ timeIndex = 2
 ###传感器收集的时间
 totalCollectTime = 10.0
 posGap = 200
-vGap = 20
+vGap = 5
 maxCollectNum = 10
 ###速度变化
 vChange = 5
@@ -30,7 +30,6 @@ vChange = 5
 covariance_matrix = np.eye(maxCollectNum)
 mainRadarIndex = 0
 minCollectEpoch = 0.1
-
 
 
 def generate_normal_noise(mean, std, size):
@@ -54,13 +53,14 @@ class DataGenerator:
         collectGap = np.round(collectGap, decimals=1)
         ansTuple = []
         # 随机生成雷达观测误差
-
+        diffVec = np.random.uniform(-self.diff, self.diff, self.numRadar)
         self.getRadarCollectNum(collectGap, collectNums)
         label = torch.zeros(self.numRadar, self.numTrack, dtype=torch.int64)
         xPos,yPos = self.getTrack()
         for radarIndex in range(0, self.numRadar):
             # 获得能够读取的点数
             curCanGettingPoints = collectNums[radarIndex]
+            noise = generate_normal_noise(0, 1, curCanGettingPoints )
             ###x,y,t
             curAns = torch.zeros(self.numTrack, maxCollectNum, 3)
             for trackIndex in range(0, self.numTrack):
@@ -69,19 +69,19 @@ class DataGenerator:
                 nowPointIndex = 0
                 while nowPointIndex < curCanGettingPoints:
                     nowIndex = int(nowTimeStamp*10)
-                    curAns[trackIndex][nowPointIndex][xPosIndex] = generate_normal_noise(xPos[trackIndex][nowIndex],1,1)[0]
-                    curAns[trackIndex][nowPointIndex][yPosIndex] = generate_normal_noise(yPos[trackIndex][nowIndex],1,1)[0]
+                    curAns[trackIndex][nowPointIndex][xPosIndex] = xPos[trackIndex][nowIndex] + diffVec[radarIndex] + noise[nowPointIndex]
+                    curAns[trackIndex][nowPointIndex][yPosIndex] = yPos[trackIndex][nowIndex] + diffVec[radarIndex] + noise[nowPointIndex]
                     curAns[trackIndex][nowPointIndex][timeIndex] = nowTimeStamp
                     nowTimeStamp += collectGap[radarIndex]
                     nowPointIndex += 1
             ##以下操作随机打散track
-            indices = torch.randperm(curAns.size(0))
-            for trackIndex in range(0, self.numTrack):
-                label[radarIndex][trackIndex] = indices[trackIndex]
-            curAns = curAns[indices]
-            curAns = curAns.view(self.numTrack, 1, maxCollectNum, 3)
+            # indices = torch.randperm(curAns.size(0))
+            # for trackIndex in range(0, self.numTrack):
+            #     label[radarIndex][trackIndex] = indices[trackIndex]
+            # curAns = curAns[indices]
+            curAns = curAns.view(self.numTrack, 1 ,maxCollectNum, 3)
             ansTuple.append(curAns)
-        return ansTuple, label, collectNums
+        return ansTuple, label, collectNums, xPos, yPos
 
     def getRadarCollectNum(self,collectGap, collectNums):
         for radarIndex in range(0, self.numRadar):
@@ -118,7 +118,7 @@ class DataGenerator:
             ansYPos.append(curPosVecY)
         return ansXPos, ansYPos
 
-    def drawRadarDataCurve(self,radarData, collectNums):
+    def drawRadarDataCurve(self,radarData, collectNums,xPosG,yPosG):
         for radarIndex in range(0, self.numRadar):
             for trackIndex in range(0, self.numTrack):
                 xPos = []
@@ -129,12 +129,17 @@ class DataGenerator:
                     yPos.append(radarData[radarIndex][trackIndex][0][pointIndex][yPosIndex].item())
                 labelStr = 'CurveIndex' + str(radarIndex) + str(trackIndex)
                 plt.scatter(xPos, yPos, label=labelStr, s=15)
-                break
+        for track in range(0, self.numTrack):
+            plt.plot(xPosG[track],yPosG[track],label=str(track))
         plt.title('Curves')
         plt.xlabel('X')
         plt.ylabel('Y')
         plt.show()
         return
+
+    def drawRawTrack(self,xPos,yPos):
+        plt.plot(xPos, yPos, label='true track')
+        plt.show()
 
 
 

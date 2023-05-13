@@ -20,33 +20,33 @@ def testAcc() :
     fModel.eval()
 
     cModel = torch.load('classModel.pth')
-    testData, testLabel = DG.getRadarData()
+    cModel.eval()
+    trainGenerator = DG.DataGenerator(numRadar=30, numTrack=2, diff=5, xv=60, yv=60, pos=600, vChange=5)
+    testData, testLabel, len, xPos, yPos = trainGenerator.getRadarData()
+    trainGenerator.drawRadarDataCurve(testData, len, xPos, yPos)
     testLabel.cuda()
-
-    DG.drawRadarDataCurve(testData)
     cModel.eval()
     global correct, error
-    for currentRadar in range(0, DG.numRadar):
-        if currentRadar == DG.mainRadarIndex:
-            continue
-        for mainRadarTrackIndex in range(0, DG.numTrack):
-            for subRadarTrackIndex in range(0, DG.numTrack):
-                mainData = testData[DG.mainRadarIndex][mainRadarTrackIndex].cuda()
-                subData = testData[currentRadar][subRadarTrackIndex].cuda()
-                mainRadarOut = fModel.forward(mainData, DG.collectNums[DG.mainRadarIndex])
-                subRadarOut = fModel.forward(subData, DG.collectNums[currentRadar])
-                similar = torch.cat((mainRadarOut, subRadarOut), dim=0)
-                res = cModel.forward(similar)
-                if testLabel[DG.mainRadarIndex][mainRadarTrackIndex] == testLabel[currentRadar][subRadarTrackIndex]:
-                    if res >= 0.5:
-                        correct = correct + 1
+    for firstRadar in range (0,trainGenerator.numRadar):
+        for currentRadar in range(0, trainGenerator.numRadar):
+            for mainRadarTrackIndex in range(0,  trainGenerator.numTrack):
+                for subRadarTrackIndex in range(0,  trainGenerator.numTrack):
+                    mainData = testData[firstRadar][mainRadarTrackIndex].cuda()
+                    subData = testData[currentRadar][subRadarTrackIndex].cuda()
+                    mainRadarOut = fModel.forward(mainData, len[firstRadar])
+                    subRadarOut = fModel.forward(subData, len[currentRadar])
+                    similar = torch.cat((mainRadarOut, subRadarOut), dim=0)
+                    res = cModel.forward(similar)
+                    if testLabel[firstRadar][mainRadarTrackIndex] == testLabel[currentRadar][subRadarTrackIndex]:
+                        if res >= 0.5:
+                            correct = correct + 1
+                        else:
+                            error = error + 1
                     else:
-                        error = error + 1
-                else:
-                    if res >= 0.5:
-                        error = error + 1
-                    else:
-                        correct = correct + 1
+                        if res >= 0.5:
+                            error = error + 1
+                        else:
+                            correct = correct + 1
     print(correct)
     print(error)
     print(correct / (correct + error))
