@@ -4,21 +4,40 @@ import torch.optim as optim
 import DataGeneratator as DG
 
 numFeature = 30
-Nhidden_size = 8
-
+Nhidden_size = 64
 Ninput_size = 3
 Nbatch_first = True
 Nnum_layers = 2
 ###特征提取网络
 class RNNClassifier(nn.GRU):
     def __init__(self):
-        super().__init__(input_size=Ninput_size, hidden_size=Nhidden_size, batch_first=True, num_layers=Nnum_layers, bidirectional=True)
-    def forward(self, input,len):
-        package = nn.utils.rnn.pack_padded_sequence(input, len.cpu(), batch_first=Nbatch_first,
-                                                    enforce_sorted=False)
-        output, hidden = super().forward(input)
-        hidden = hidden.view(2*self.hidden_size*Nnum_layers)
-        return hidden
+        super().__init__(input_size=Ninput_size, hidden_size=Nhidden_size, batch_first=True, num_layers=Nnum_layers, bidirectional=False)
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(1, 3, kernel_size=1),
+            nn.ReLU()
+        )
+
+        # 全连接层
+        self.fc = nn.Sequential(
+            nn.Linear(Nhidden_size * 10, 1),
+            # nn.ReLU(),
+            # nn.Linear(32, 1),
+            nn.Sigmoid()
+        )
+
+
+
+    def forward(self, input1,len1,input2,len2):
+        input1 = input1.unsqueeze(0)
+        input2 = input2.unsqueeze(0)
+        output1, hidden1 = super().forward(input1)
+        output2, hidden2 = super().forward(input2)
+
+        dis = torch.abs(output1 - output2)
+        x = dis.view(1*10* self.hidden_size)
+        x = self.fc(x)
+        return x
 ###判别网络
 class LogisticRegression(nn.Module):
     def __init__(self):
@@ -26,21 +45,21 @@ class LogisticRegression(nn.Module):
 
         # 卷积层
         self.conv = nn.Sequential(
-            nn.Conv2d(2, 1, kernel_size=1),
+            nn.Conv2d(1, 3, kernel_size=1),
             nn.ReLU()
         )
+
         # 全连接层
         self.fc = nn.Sequential(
-            nn.Linear(2*Nhidden_size*Nnum_layers, 32),
+            nn.Linear(3*2*Nhidden_size*Nnum_layers, 32),
             nn.ReLU(),
             nn.Linear(32, 1),
             nn.Sigmoid()
         )
 
     def forward(self, x):
-        # 展平特征图
-        x = x.view(2,2*Nnum_layers,Nhidden_size)
+        x = x.view(1,2*Nnum_layers,Nhidden_size)
         x = self.conv(x)
-        x = x.view(2*Nhidden_size*Nnum_layers)
+        x = x.view(3*2*Nhidden_size*Nnum_layers)
         x = self.fc(x)
         return x

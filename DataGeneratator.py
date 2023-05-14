@@ -37,7 +37,7 @@ def generate_normal_noise(mean, std, size):
     return noise
 
 class DataGenerator:
-    def __init__(self, numRadar, numTrack ,diff, xv,yv, pos ,vChange):
+    def __init__(self, numRadar, numTrack ,diff, xv,yv, pos ,vChange,drawCurve=False):
         self.numRadar = numRadar
         self.numTrack = numTrack
         self.diff = diff
@@ -47,6 +47,7 @@ class DataGenerator:
         self.vChange = vChange
         self.time = np.arange(0.0, 1.0, 0.1)
         self.collect = int(totalCollectTime // minCollectEpoch)
+        self.drawCurve = drawCurve
     def getRadarData(self):
         collectNums = torch.zeros(self.numRadar, 1, dtype=torch.int32)
         collectGap = np.random.uniform(1.0, 2.0, size=self.numRadar)
@@ -74,13 +75,11 @@ class DataGenerator:
                     curAns[trackIndex][nowPointIndex][timeIndex] = nowTimeStamp
                     nowTimeStamp += collectGap[radarIndex]
                     nowPointIndex += 1
-            ##以下操作随机打散track
-            # indices = torch.randperm(curAns.size(0))
-            # for trackIndex in range(0, self.numTrack):
-            #     label[radarIndex][trackIndex] = indices[trackIndex]
-            # curAns = curAns[indices]
-            curAns = curAns.view(self.numTrack, 1 ,maxCollectNum, 3)
             ansTuple.append(curAns)
+        # if(self.drawCurve):
+        #     self.drawRadarDataCurve(ansTuple, collectNums, xPos, yPos)
+        for index in range(0, len(ansTuple)):
+            ansTuple[index] = torch.nn.functional.normalize(ansTuple[index], p=2.0, dim=1, eps=1e-12, out=None)
         return ansTuple, label, collectNums, xPos, yPos
 
     def getRadarCollectNum(self,collectGap, collectNums):
@@ -108,8 +107,9 @@ class DataGenerator:
                     prexPos = startPosX[trackIndex]
                     preyPos = startPosY[trackIndex]
                 else:
-                    vX = generate_random_float_list(vX - self.vChange, vX + self.vChange, 1)[0]
-                    vY = generate_random_float_list(vY - self.vChange, vY + self.vChange, 1)[0]
+                    if(point %10 == 0):
+                        vX = generate_random_float_list(vX - self.vChange, vX + self.vChange, 1)[0]
+                        vY = generate_random_float_list(vY - self.vChange, vY + self.vChange, 1)[0]
                     prexPos = (prexPos) + vX * (minCollectEpoch)
                     preyPos = (preyPos) + vY * (minCollectEpoch)
                 curPosVecX.append(prexPos)
@@ -125,8 +125,8 @@ class DataGenerator:
                 yPos = []
                 curCanGettingPoints = collectNums[radarIndex]
                 for pointIndex in range(0, curCanGettingPoints):
-                    xPos.append(radarData[radarIndex][trackIndex][0][pointIndex][xPosIndex].item())
-                    yPos.append(radarData[radarIndex][trackIndex][0][pointIndex][yPosIndex].item())
+                    xPos.append(radarData[radarIndex][trackIndex][pointIndex][xPosIndex].item())
+                    yPos.append(radarData[radarIndex][trackIndex][pointIndex][yPosIndex].item())
                 labelStr = 'CurveIndex' + str(radarIndex) + str(trackIndex)
                 plt.scatter(xPos, yPos, label=labelStr, s=15)
         for track in range(0, self.numTrack):
