@@ -61,7 +61,7 @@ class DataGenerator:
         for radarIndex in range(0, self.numRadar):
             # 获得能够读取的点数
             curCanGettingPoints = collectNums[radarIndex]
-            noise = generate_normal_noise(0, 1, curCanGettingPoints )
+            noise = generate_normal_noise(0, 5, curCanGettingPoints )
             ###x,y,t
             curAns = torch.zeros(self.numTrack, maxCollectNum, 3)
             for trackIndex in range(0, self.numTrack):
@@ -76,10 +76,10 @@ class DataGenerator:
                     nowTimeStamp += collectGap[radarIndex]
                     nowPointIndex += 1
             ansTuple.append(curAns)
-        # if(self.drawCurve):
-        #     self.drawRadarDataCurve(ansTuple, collectNums, xPos, yPos)
-        for index in range(0, len(ansTuple)):
-            ansTuple[index] = torch.nn.functional.normalize(ansTuple[index], p=2.0, dim=1, eps=1e-12, out=None)
+        if(self.drawCurve):
+            self.drawRadarDataCurve(ansTuple, collectNums, xPos, yPos)
+        # for index in range(0, len(ansTuple)):
+        #     ansTuple[index] = torch.nn.functional.normalize(ansTuple[index], p=2.0, dim=1, eps=1e-12, out=None)
         return ansTuple, label, collectNums, xPos, yPos
 
     def getRadarCollectNum(self,collectGap, collectNums):
@@ -89,10 +89,10 @@ class DataGenerator:
     def getTrack(self):
         ansXPos = []
         ansYPos = []
-        startPosX = generate_random_float_list(self.pos, self.pos + posGap, self.numTrack)
-        startPosY = generate_random_float_list(self.pos, self.pos + posGap, self.numTrack)
-        startVX = generate_random_float_list(self.xv, self.xv + vGap, self.numTrack)
-        startVY = generate_random_float_list(self.yv, self.yv + vGap, self.numTrack)
+        startPosX = generate_random_float_list(-self.pos, self.pos, self.numTrack)
+        startPosY = generate_random_float_list(-self.pos, self.pos, self.numTrack)
+        startVX = generate_random_float_list(-self.xv, self.xv, self.numTrack)
+        startVY = generate_random_float_list(-self.yv, self.yv, self.numTrack)
         for trackIndex in range(0, self.numTrack):
             vX = 0.
             vY = 0.
@@ -131,9 +131,9 @@ class DataGenerator:
                 plt.scatter(xPos, yPos, label=labelStr, s=15)
         for track in range(0, self.numTrack):
             plt.plot(xPosG[track],yPosG[track],label=str(track))
-        plt.title('Curves')
-        plt.xlabel('X')
-        plt.ylabel('Y')
+        # plt.title('')
+        # plt.xlabel('X')
+        # plt.ylabel('Y')
         plt.show()
         return
 
